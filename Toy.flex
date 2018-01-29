@@ -1,33 +1,31 @@
-//CS 411 Project1
-//Lexical Analyzer
+/*CS 411 Lexer*/
 
 import java.util.ArrayList;
 
 %%
 
 %public
-%class LexicalAnalyzer
+%class Lexer
 %intwrap
 %unicode
 %line
 %column
 %eofclose
 
+
 %{
 
   public enum tokens {
     t_boolean, t_break, t_class, t_double,
-    t_else, t_extends, t_for, t_if,
-    t_implements, t_int, t_interface, t_newarray,
-    t_println, t_readln, t_return, t_string,
-    t_void, t_while, t_plus, t_minus,
-    t_multiplication, t_division, t_mod, t_less,
-    t_lessequal, t_greater, t_greaterequal, t_equal,
-    t_notequal, t_and, t_or, t_not,
-    t_assignop, t_semicolon, t_comma, t_period,
-    t_leftparen, t_rightparen, t_leftbracket, t_rightbracket,
-    t_leftbrace, t_rightbrace, t_intconstant, t_doubleconstant,
-    t_stringconstant, t_booleanconstant, t_id
+    t_else, t_extends, t_for, t_if, t_implements,
+    t_int, t_interface, t_newarray, t_println,
+    t_readln, t_return, t_string, t_void, t_while,
+    t_plus, t_minus, t_multiplication, t_division,
+    t_mod, t_less, t_lessequal, t_greater, t_greaterequal,
+    t_equal, t_notequal, t_assignop, t_semicolon, t_comma,
+    t_period, t_leftparen, t_rightparen, t_leftbracket,
+    t_rightbracket, t_leftbrace, t_rightbrace, t_boolconstant,
+    t_intconstant, t_doubleconstant, t_stringconstant, t_id
   }
 
   public class symbol_table {
@@ -44,6 +42,7 @@ import java.util.ArrayList;
 
   public symbol_table s = new symbol_table();
 
+  // Return array index of character
   public int alphaIndex(char c) {
     int v = c;
     if (v >= 97) {
@@ -56,15 +55,18 @@ import java.util.ArrayList;
     int value = alphaIndex(str.charAt(0));
     int ptr = s.control[value];
 
-    if (ptr == -1) {
+    if (ptr == -1) { // Undefined
+        // point to last 
         s.control[value] = s.symbol.size();
+        // add the rest of the characters
         for (int i = 1; i < str.length(); ++i) {
             s.symbol.add(str.charAt(i));
         }
         s.symbol.add('@'); 
     }
-    else {        
-        int i = 1;
+    else { // Defined
+        
+        int i = 1; // 2nd character, 'i' is the symbol counter
         boolean exit = false;
 
         if(str.length() == 1) {
@@ -73,6 +75,7 @@ import java.util.ArrayList;
 
         while(!exit) {
             if (s.symbol.get(ptr) == str.charAt(i)) {
+                // if endmarker
                 if(str.length() -1 <= i) {
                     exit = true;
                     break; 
@@ -87,8 +90,10 @@ import java.util.ArrayList;
 
                 while(s.next.size() <= ptr) {
                     s.next.add(-1);
-                }
+                } // grow the (next) array
 
+                // Set next available which will 
+                // always be size() (dynamically allocated)
                 s.next.set(ptr,s.symbol.size()); 
 
                 while(i < str.length()) {
@@ -100,6 +105,7 @@ import java.util.ArrayList;
                 break;
             }
         }
+
 
     }
 
@@ -191,16 +197,36 @@ import java.util.ArrayList;
 
 %}
 
+/*The alphabet*/
 letter = [a-zA-Z]
+
+/*Base 10 digits*/
 digit = [0-9]
+
+/*Hex with 0x or 0X followed by 1 or more hex digits*/
 hex = (0x|0X)[a-fA-F0-9]+
+
+/*Integer is base 10 or 16*/
 integer = ({digit}+|{hex})
+
+/*Exponents begining with e/E, optional sign, 1+ digits*/
 exponent = ((E|e)("+"|"-")?({digit})+)
+
+/*Float with optional exponent, and int with exponent*/
 double = (({digit}+"."{digit}*{exponent}?)|({digit}+{exponent}))
+
+/*Identifiers begin with letter, followed by letter/digit/underscore*/
 identifier = {letter}({letter}|{digit}|"_")*
+
+/*double quote, anything but newline and quote, double quote*/
 string = \"([^\"\n])*\"
+
+/*New line character class*/
 newline = \n
+
+/*spaces and tabs*/
 whitespace = [ \t]+
+
 LineTerminator = \r|\n|\r\n
 InputCharacter = [^\r\n]
 
@@ -210,6 +236,7 @@ Comment = ({TraditionalComment}|{EndOfLineComment})
 
 %%
 
+/*Ignore comments that match the following*/
 
 {Comment} { }
 
@@ -236,7 +263,8 @@ string {System.out.printf("%s ",yytext()); return tokens.t_string.ordinal();}
 void {System.out.printf("%s ",yytext()); return tokens.t_void.ordinal();}
 while {System.out.printf("%s ",yytext()); return tokens.t_while.ordinal();}
 
-true|false {System.out.print("booleanconstant "); return tokens.t_booleanconstant.ordinal();}
+/*stupid thing has to be declared up here or it will match id */
+true|false {System.out.print("boolconstant "); return tokens.t_boolconstant.ordinal();}
 
 {identifier} {System.out.print("id "); trie(yytext()); return tokens.t_id.ordinal();}
 {whitespace} { }
@@ -258,9 +286,6 @@ true|false {System.out.print("booleanconstant "); return tokens.t_booleanconstan
 ">=" {System.out.print("greaterequal "); return tokens.t_greaterequal.ordinal();}
 "==" {System.out.print("equal "); return tokens.t_equal.ordinal();}
 "!=" {System.out.print("notequal "); return tokens.t_notequal.ordinal();}
-"&&" {System.out.print("and"); return tokens.t_and.ordinal();}
-"||" {System.out.print("or"); return tokens.t_or.ordinal();}
-"!" {System.out.print("not"); return tokens.t_not.ordinal();}
 "=" {System.out.print("assignop "); return tokens.t_assignop.ordinal();}
 ";" {System.out.print("semicolon "); return tokens.t_semicolon.ordinal();}
 "," {System.out.print("comma "); return tokens.t_comma.ordinal();}
