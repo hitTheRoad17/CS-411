@@ -2,6 +2,8 @@
 
 //CS 411 Project1
 //Lexical Analyzer
+//Ka Hei Lee
+//Hanbo Ye
 
 import java.util.ArrayList;
 
