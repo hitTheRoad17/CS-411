@@ -2,7 +2,7 @@ Winter Quarter 2018
 CS 411 project #1
 A lexical analyzer
 
-Chris Lee
+Ka Hei Lee
 Hanbo Ye
 
 To run the program:
